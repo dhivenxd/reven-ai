@@ -17,3 +17,5 @@ dist/
 Thumbs.db
 .idea/
 .vscode/
+data/raw/
+data/processed/
