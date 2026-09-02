@@ -5,6 +5,7 @@ __pycache__/
 venv/
 .env
 .env.*
+!.env.example
 
 # Node
 node_modules/
@@ -19,3 +20,6 @@ Thumbs.db
 .vscode/
 data/raw/
 data/processed/
+
+# Razorpay integration runtime artifacts
+data/razorpay_audit.jsonl
