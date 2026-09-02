@@ -1,0 +1,12 @@
+# REVEN LLM Agent Layer Dependencies
+
+# LLM Provider
+google-genai>=0.2.0
+
+# Web Framework (for API server)
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+
+# Environment Configuration
+python-dotenv>=1.0.0
