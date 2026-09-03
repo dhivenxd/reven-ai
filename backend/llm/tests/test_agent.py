@@ -188,6 +188,30 @@ class TestGetRecoveryOutcome:
         assert result.data["execution_status"] == "executed"
         assert "Payment link created" in result.data["execution_message"]
 
+    def test_outcome_structured_payment_link_truth(self, decision_store, sample_decision):
+        """Payment link execution returns structured truth fields."""
+        decision_id = decision_store.save_decision(sample_decision)
+        decision_store.update_execution_status(
+            decision_id,
+            status="executed",
+            razorpay_result_id="link_xyz",
+        )
+
+        result = get_recovery_outcome(
+            decision_id=decision_id,
+            store=decision_store,
+        )
+
+        assert result.status.value == "success"
+        # Structured execution type
+        assert result.data["execution_type"] == "payment_link_created"
+        assert result.data["requires_customer_action"] is True
+        assert result.data["revenue_recovered"] is False
+        # Currency field
+        assert result.data["currency"] == "INR"
+        # Critical safety message
+        assert "Revenue is NOT yet recovered" in result.data["execution_message"]
+
 
 class TestGetRecoverySummary:
     """Tests for get_recovery_summary tool."""
@@ -423,6 +447,20 @@ class TestNoDataFabrication:
         # Should indicate pending, not fabricate success
         assert result.data["execution_status"] == "pending"
         assert "not yet executed" in result.data.get("execution_message", "").lower()
+
+    def test_inr_currency_not_usd(self, decision_store, sample_decision):
+        """All amounts are INR, not USD."""
+        decision_id = decision_store.save_decision(sample_decision)
+        decision_store.update_execution_status(decision_id, status="executed")
+
+        result = get_recovery_outcome(
+            decision_id=decision_id,
+            store=decision_store,
+        )
+
+        # Must have currency field set to INR
+        assert "currency" in result.data
+        assert result.data["currency"] == "INR"
 
 
 if __name__ == "__main__":

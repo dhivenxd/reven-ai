@@ -123,10 +123,15 @@ def execute_approved_decision(
         )
 
         # Record execution result
+        # Distinguish payment link ID from captured payment ID:
+        # - razorpay_resource_id from ExecutionResult is the Razorpay Payment Link ID (e.g., "pl_xxx")
+        # - razorpay_result_id stores the captured payment ID once payment.captured fires
+        razorpay_payment_link_id = execution_result.razorpay_resource_id
         store.update_execution_status(
             decision_id,
             status="executed" if execution_result.execution_status == "executed" else "failed",
             razorpay_result_id=execution_result.razorpay_resource_id,
+            razorpay_payment_link_id=razorpay_payment_link_id,
             error=execution_result.message if execution_result.execution_status != "executed" else None,
         )
 

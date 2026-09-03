@@ -19,7 +19,8 @@ from pydantic import BaseModel
 
 from backend.llm.agent.core import RevenAgent
 from backend.llm.client.gemini_client import GeminiLLMClient
-from backend.llm.store.decision_store import InMemoryDecisionStore
+from backend.llm.store.shared import get_shared_store
+from backend.llm.store.decision_store import InMemoryDecisionStore, StoredDecision
 from backend.integrations.razorpay.execution_gateway import ExecutionGateway
 from backend.integrations.razorpay import config as razorpay_config
 from backend.reven.reven_engine import run_reven as frozen_run_reven
@@ -79,8 +80,9 @@ async def lifespan(app: FastAPI):
     app.state.session_counter = 0
 
     try:
-        # Initialize components
-        app.state.store = InMemoryDecisionStore()
+        # Initialize components — use shared store so webhook server and LLM API
+        # server see the same decisions when running in the same process.
+        app.state.store = get_shared_store()
         app.state.gateway = ExecutionGateway()
 
         # Try to initialize Gemini client
@@ -141,13 +143,16 @@ def get_agent() -> RevenAgent:
 
 
 def get_store() -> InMemoryDecisionStore:
-    """Get decision store."""
-    if not app.state.store:
-        raise HTTPException(
-            status_code=503,
-            detail="Decision store not initialized",
-        )
-    return app.state.store
+    """Get decision store.
+
+    Uses app.state.store if initialized (normal server lifecycle),
+    otherwise falls back to the shared store singleton (test environment
+    where lifespan is not triggered by TestClient).
+    """
+    if hasattr(app.state, "store") and app.state.store is not None:
+        return app.state.store
+    # Fall back to shared store (for test environments without lifespan)
+    return get_shared_store()
 
 
 # ============================================================
@@ -238,7 +243,7 @@ async def agent_chat(request: ChatRequest) -> ChatResponse:
         )
 
 
-@app.get("/agent/decisions/{customer_id}")
+@app.get("/agent/customer/{customer_id}/decisions")
 async def get_customer_decisions(customer_id: str) -> dict[str, Any]:
     """
     Get decisions for a customer (direct API, bypassing LLM).
@@ -360,6 +365,165 @@ async def seed_demo_data() -> dict[str, Any]:
         "decision_ids": decision_ids,
         "customer_ids": ["cust_demo_001", "cust_demo_002", "cust_demo_003"],
         "message": "Demo data seeded successfully. Decisions available for agent queries.",
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+# ============================================================
+# FRONTEND DASHBOARD ENDPOINTS
+# ============================================================
+
+
+def _serialize_stored_decision(d: StoredDecision) -> dict[str, Any]:
+    """Serialize a StoredDecision for API responses."""
+    return {
+        "decision_id": d.decision_id,
+        "customer_id": d.customer_id,
+        "intervention_type": d.intervention_type.value,
+        "expected_net_revenue": d.expected_net_revenue,
+        "confidence": d.confidence,
+        "reason": d.reason,
+        "alternatives": d.alternatives,
+        "execution_status": d.execution_status,
+        "razorpay_payment_link_id": d.razorpay_payment_link_id,
+        "razorpay_result_id": d.razorpay_result_id,
+        "captured_amount": d.captured_amount,
+        "recovered_at": d.recovered_at.isoformat() if d.recovered_at else None,
+        "executed_at": d.executed_at.isoformat() if d.executed_at else None,
+        "execution_error": d.execution_error,
+        "created_at": d.created_at.isoformat(),
+    }
+
+
+@app.get("/agent/summary")
+async def get_summary(include_pending: bool = False) -> dict[str, Any]:
+    """
+    Executive dashboard summary.
+
+    Returns aggregated recovery metrics from the decision store.
+    """
+    store = get_store()
+    summary = store.get_summary(include_pending=include_pending)
+
+    # Compute additional derived metrics
+    total = summary.get("total_decisions", 0)
+    executed = summary.get("executed_decisions", 0)
+    captured = summary.get("captured_decisions", 0)
+    pending = summary.get("pending_decisions", 0)
+    failed = summary.get("failed_executions", 0)
+
+    # Intervention rate: decisions with action (executed or captured) / total
+    intervention_rate = round((executed + captured) / total, 4) if total > 0 else 0.0
+
+    # No-action count (total - executed - captured - pending - failed)
+    no_action_count = max(0, total - executed - captured - pending - failed)
+    no_action_pct = round(no_action_count / total, 4) if total > 0 else 0.0
+
+    return {
+        "total_decisions": total,
+        "total_customers": total,  # Approximation; each decision is one customer
+        "intervention_count": executed + captured,
+        "intervention_rate": intervention_rate,
+        "no_action_count": no_action_count,
+        "no_action_percentage": no_action_pct,
+        "executed_decisions": executed,
+        "captured_decisions": captured,
+        "pending_decisions": pending,
+        "failed_executions": failed,
+        "revenue_preserved": summary.get("revenue_preserved", 0.0),
+        "revenue_recovered": summary.get("revenue_recovered", 0.0),
+        "intervention_breakdown": summary.get("breakdown_by_type", {}),
+        "include_pending": include_pending,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get("/agent/decisions/{decision_id}")
+async def get_decision(decision_id: str) -> dict[str, Any]:
+    """
+    Decision detail by decision_id.
+
+    Returns full details of a specific decision for the customer/decision explorer.
+    """
+    store = get_store()
+    stored = store.get_decision(decision_id)
+
+    if stored is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "message": f"Decision '{decision_id}' not found in store.",
+            },
+        )
+
+    return _serialize_stored_decision(stored)
+
+
+@app.get("/agent/policy/overview")
+async def get_policy_overview() -> dict[str, Any]:
+    """
+    Policy intelligence overview.
+
+    Returns intervention distribution and policy outcomes from the decision store.
+    """
+    store = get_store()
+    summary = store.get_summary(include_pending=True)
+
+    total = summary.get("total_decisions", 0)
+    breakdown = summary.get("breakdown_by_type", {})
+
+    # Compute intervention rate and no-action percentage
+    executed = summary.get("executed_decisions", 0)
+    captured = summary.get("captured_decisions", 0)
+    intervention_rate = round((executed + captured) / total, 4) if total > 0 else 0.0
+    no_action_count = max(0, total - executed - captured - summary.get("pending_decisions", 0) - summary.get("failed_executions", 0))
+    no_action_pct = round(no_action_count / total, 4) if total > 0 else 0.0
+
+    # Recovery outcomes
+    revenue_preserved = summary.get("revenue_preserved", 0.0)
+    revenue_recovered = summary.get("revenue_recovered", 0.0)
+    captured_decisions = summary.get("captured_decisions", 0)
+
+    return {
+        "intervention_distribution": breakdown,
+        "no_action_percentage": no_action_pct,
+        "no_action_count": no_action_count,
+        "intervention_rate": intervention_rate,
+        "total_decisions": total,
+        "captured_decisions": captured_decisions,
+        "revenue_preserved": revenue_preserved,
+        "revenue_recovered": revenue_recovered,
+        "timestamp": datetime.now().isoformat(),
+    }
+
+
+@app.get("/agent/decisions")
+async def list_decisions(
+    limit: int = 50,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """
+    Recent decisions / customer explorer.
+
+    Returns a bounded list of decisions sorted by created_at descending.
+    """
+    store = get_store()
+
+    # Access internal decisions dict and sort by created_at desc
+    decisions_dict = getattr(store, "_decisions", {})
+    all_decisions = list(decisions_dict.values())
+    all_decisions.sort(key=lambda d: d.created_at, reverse=True)
+
+    total = len(all_decisions)
+    paginated = all_decisions[offset : offset + limit]
+
+    return {
+        "decisions": [_serialize_stored_decision(d) for d in paginated],
+        "total": total,
+        "limit": limit,
+        "offset": offset,
+        "count": len(paginated),
         "timestamp": datetime.now().isoformat(),
     }
 

@@ -1,11 +1,15 @@
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
+*.pyc
+*.pyo
 .venv/
 venv/
 .env
 .env.*
 !.env.example
+.pytest_cache/
 
 # Node
 node_modules/

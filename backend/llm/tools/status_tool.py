@@ -70,7 +70,9 @@ def get_customer_recovery_status(
 
         # Determine overall status
         status = ExecutionStatus.PENDING
-        if latest.execution_status == "executed":
+        if latest.execution_status == "captured":
+            status = ExecutionStatus.CAPTURED
+        elif latest.execution_status == "executed":
             status = ExecutionStatus.EXECUTED
         elif latest.execution_status == "failed":
             status = ExecutionStatus.FAILED

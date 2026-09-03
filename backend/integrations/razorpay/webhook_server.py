@@ -31,6 +31,7 @@ from backend.integrations.razorpay.execution_gateway import ExecutionGateway
 from backend.integrations.razorpay.audit import AuditLogger
 from backend.integrations.razorpay import config
 from backend.reven.reven_engine import run_reven
+from backend.llm.store.shared import get_shared_store
 
 
 # Idempotency: track processed event IDs to prevent duplicate execution
@@ -47,6 +48,11 @@ app = FastAPI(
 
 audit = AuditLogger()
 gateway = ExecutionGateway()
+# Shared decision store — the SAME instance used by the LLM API server.
+# Decisions from payment.failed webhooks are saved here so that
+# payment.captured webhooks can look them up and mark revenue as recovered.
+# When both servers run in the same process, they share one store.
+decision_store = get_shared_store()
 
 
 @app.get("/health")
@@ -235,6 +241,22 @@ async def handle_payment_failed(
             message=execution_result.message,
         )
 
+        # Save decision to decision store so payment.captured can mark it as recovered.
+        # Store the Razorpay Payment Link ID (razorpay_resource_id) as the reference
+        # so the payment.captured webhook can look up this decision.
+        decision_id = decision_store.save_decision(
+            decision=decision,
+            execution_status=execution_result.execution_status,
+        )
+        # Update with the payment link ID for later capture lookup
+        if execution_result.razorpay_resource_id:
+            decision_store.update_execution_status(
+                decision_id,
+                status=execution_result.execution_status,
+                razorpay_result_id=execution_result.razorpay_resource_id,
+                razorpay_payment_link_id=execution_result.razorpay_resource_id,
+            )
+
         # Return success response
         response_data = {
             "status": "processed",
@@ -279,7 +301,8 @@ async def handle_payment_captured(
         - This marks successful payment outcome
         - Do NOT run a new recovery intervention
         - Do NOT create another Payment Link
-        - Record the success for revenue tracking
+        - Only captured payment establishes successful recovery
+        - Safely handles unknown payment links (no state corruption)
     """
     try:
         payment_entity = payload.get("payload", {}).get("payment", {}).get("entity", {})
@@ -288,6 +311,10 @@ async def handle_payment_captured(
         subscription_id = payment_entity.get("subscription_id")
         amount = payment_entity.get("amount", 0) / 100.0  # Convert paise to rupees
 
+        # The reference_id field is set when creating the Payment Link.
+        # It is the decision_id for REVEN-initiated payment links.
+        reference_id = payment_entity.get("reference_id")
+
         audit.log_webhook_received(
             event_type="payment.captured",
             customer_id=customer_id,
@@ -295,7 +322,40 @@ async def handle_payment_captured(
             subscription_id=subscription_id,
         )
 
-        # Log successful payment outcome (no intervention needed)
+        # Try to find and update the corresponding decision.
+        # Look up by:
+        # 1. Payment link reference_id (decision_id)
+        # 2. Fall back to customer_id
+        decision_id = None
+        recovered = False
+
+        if reference_id:
+            # Primary lookup: by payment link reference_id (decision_id)
+            stored = decision_store.get_decision(reference_id)
+            if stored:
+                decision_id = reference_id
+                decision_store.mark_captured(
+                    decision_id=decision_id,
+                    captured_amount=amount,
+                    razorpay_payment_id=payment_id,
+                )
+                recovered = True
+
+        if not recovered and customer_id:
+            # Fallback: find latest decision for this customer by customer_id
+            customer_decisions = decision_store.get_decision_by_customer(
+                customer_id, limit=1
+            )
+            if customer_decisions:
+                decision_id = customer_decisions[0].decision_id
+                decision_store.mark_captured(
+                    decision_id=decision_id,
+                    captured_amount=amount,
+                    razorpay_payment_id=payment_id,
+                )
+                recovered = True
+
+        # Log the recovery to audit trail
         audit._append({
             "event": "payment_recovered",
             "timestamp": datetime.now().isoformat(),
@@ -303,7 +363,12 @@ async def handle_payment_captured(
             "payment_id": payment_id,
             "subscription_id": subscription_id,
             "amount": amount,
-            "message": "Payment captured successfully. Revenue recovered.",
+            "decision_id": decision_id,
+            "message": (
+                "Payment captured successfully. Revenue recovered."
+                if recovered
+                else "Payment captured but no matching decision found."
+            ),
         })
 
         return JSONResponse(
@@ -315,7 +380,13 @@ async def handle_payment_captured(
                 "customer_id": customer_id,
                 "payment_id": payment_id,
                 "amount": amount,
-                "message": "Payment captured. Revenue recovered.",
+                "decision_id": decision_id,
+                "recovered": recovered,
+                "message": (
+                    "Payment captured. Revenue recovered."
+                    if recovered
+                    else "Payment captured. No matching decision found."
+                ),
             },
         )
 

@@ -34,6 +34,11 @@ class StoredDecision:
     executed_at: Optional[datetime] = None
     execution_error: Optional[str] = None
     razorpay_result_id: Optional[str] = None
+    # Razorpay payment link ID (reference_id passed when creating the link)
+    razorpay_payment_link_id: Optional[str] = None
+    # Actual recovered amount when payment.captured webhook fires
+    captured_amount: Optional[float] = None
+    recovered_at: Optional[datetime] = None
 
     def to_decision(self) -> RevenueDecision:
         """Reconstruct the original RevenueDecision."""
@@ -102,9 +107,19 @@ class DecisionStore:
         decision_id: str,
         status: str,
         razorpay_result_id: Optional[str] = None,
+        razorpay_payment_link_id: Optional[str] = None,
         error: Optional[str] = None,
     ) -> bool:
         """Update execution status after attempt."""
+        raise NotImplementedError
+
+    def mark_captured(
+        self,
+        decision_id: str,
+        captured_amount: float,
+        razorpay_payment_id: str,
+    ) -> bool:
+        """Mark a decision's payment as captured (revenue recovered)."""
         raise NotImplementedError
 
     def record_outcome(
@@ -202,9 +217,10 @@ class InMemoryDecisionStore(DecisionStore):
         decision_id: str,
         status: str,
         razorpay_result_id: Optional[str] = None,
+        razorpay_payment_link_id: Optional[str] = None,
         error: Optional[str] = None,
     ) -> bool:
-        """Update execution status."""
+        """Update execution status after attempt."""
         stored = self._decisions.get(decision_id)
         if stored is None:
             return False
@@ -212,8 +228,39 @@ class InMemoryDecisionStore(DecisionStore):
         stored.execution_status = status
         stored.executed_at = datetime.now() if status == "executed" else None
         stored.razorpay_result_id = razorpay_result_id
+        if razorpay_payment_link_id is not None:
+            stored.razorpay_payment_link_id = razorpay_payment_link_id
         stored.execution_error = error
         return True
+
+    def mark_captured(
+        self,
+        decision_id: str,
+        captured_amount: float,
+        razorpay_payment_id: str,
+    ) -> bool:
+        """Mark a decision's payment as captured (revenue recovered)."""
+        stored = self._decisions.get(decision_id)
+        if stored is None:
+            return False
+
+        # Only update if payment was captured for this decision
+        stored.execution_status = "captured"
+        stored.captured_amount = captured_amount
+        stored.recovered_at = datetime.now()
+        # Store the actual captured payment ID
+        stored.razorpay_result_id = razorpay_payment_id
+        return True
+
+    def get_decision_by_payment_link(
+        self,
+        razorpay_payment_link_id: str,
+    ) -> Optional[StoredDecision]:
+        """Find decision by Razorpay Payment Link ID (reference_id)."""
+        for stored in self._decisions.values():
+            if stored.razorpay_payment_link_id == razorpay_payment_link_id:
+                return stored
+        return None
 
     def record_outcome(
         self,
@@ -240,6 +287,7 @@ class InMemoryDecisionStore(DecisionStore):
         executed = 0
         pending = 0
         failed = 0
+        captured = 0
         revenue_preserved = 0.0
         revenue_recovered = 0.0
         breakdown: dict[str, int] = {}
@@ -255,7 +303,12 @@ class InMemoryDecisionStore(DecisionStore):
                 breakdown[stored.intervention_type.value] = 0
             breakdown[stored.intervention_type.value] += 1
 
-            if stored.execution_status == "executed":
+            if stored.execution_status == "captured":
+                captured += 1
+                # Actual recovered amount from payment.captured webhook
+                revenue_recovered += stored.captured_amount or 0.0
+                revenue_preserved += stored.captured_amount or 0.0
+            elif stored.execution_status == "executed":
                 executed += 1
                 # Estimate revenue from expected_net_revenue
                 # Note: actual recovery confirmed via webhook
@@ -268,6 +321,7 @@ class InMemoryDecisionStore(DecisionStore):
         return {
             "total_decisions": total,
             "executed_decisions": executed,
+            "captured_decisions": captured,
             "pending_decisions": pending,
             "failed_executions": failed,
             "revenue_preserved": round(revenue_preserved, 2),

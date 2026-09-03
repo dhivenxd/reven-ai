@@ -54,6 +54,7 @@ def get_recovery_outcome(
             "customer_id": decision.customer_id,
             "intervention_type": decision.intervention_type.value,
             "expected_net_revenue": decision.expected_net_revenue,
+            "currency": "INR",
             "execution_status": stored.execution_status,
             "created_at": stored.created_at.isoformat(),
         }
@@ -65,14 +66,33 @@ def get_recovery_outcome(
 
             # CRITICAL: Distinguish payment link creation from actual recovery
             if decision.intervention_type.value == "payment_retry":
+                # Structured truth: PAYMENT_RETRY → payment_link_created execution
+                data["execution_type"] = "payment_link_created"
+                data["requires_customer_action"] = True
+                data["revenue_recovered"] = False
                 data["execution_message"] = (
                     "Payment link created. Customer must complete payment. "
                     "Revenue is NOT yet recovered."
                 )
             else:
+                data["execution_type"] = decision.intervention_type.value
+                data["requires_customer_action"] = False
+                data["revenue_recovered"] = False
                 data["execution_message"] = (
                     f"{decision.intervention_type.value} intervention executed."
                 )
+
+        elif stored.execution_status == "captured":
+            # Revenue has been recovered via payment.captured webhook
+            data["execution_type"] = "captured"
+            data["requires_customer_action"] = False
+            data["revenue_recovered"] = True
+            data["captured_amount"] = stored.captured_amount
+            data["recovered_at"] = stored.recovered_at.isoformat() if stored.recovered_at else None
+            data["razorpay_resource_id"] = stored.razorpay_result_id
+            data["execution_message"] = (
+                f"Payment captured. ₹{stored.captured_amount:.2f} recovered successfully."
+            )
 
         elif stored.execution_status == "failed":
             data["execution_error"] = stored.execution_error

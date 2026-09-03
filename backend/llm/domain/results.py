@@ -22,6 +22,7 @@ class ExecutionStatus(str, Enum):
     """Status of an execution attempt."""
     PENDING = "pending"
     EXECUTED = "executed"
+    CAPTURED = "captured"
     FAILED = "failed"
     BLOCKED = "blocked"
     NOT_FOUND = "not_found"
@@ -204,6 +205,7 @@ class RecoverySummaryResult:
     """Result from get_recovery_summary."""
     total_decisions: int
     executed_decisions: int
+    captured_decisions: int
     pending_decisions: int
     failed_executions: int
     revenue_preserved: float
@@ -216,6 +218,7 @@ class RecoverySummaryResult:
         return {
             "total_decisions": self.total_decisions,
             "executed_decisions": self.executed_decisions,
+            "captured_decisions": self.captured_decisions,
             "pending_decisions": self.pending_decisions,
             "failed_executions": self.failed_executions,
             "revenue_preserved": self.revenue_preserved,

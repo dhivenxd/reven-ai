@@ -6,6 +6,10 @@ from backend.llm.api.server import (
     ChatResponse,
     HealthResponse,
     AgentStatusResponse,
+    get_summary,
+    get_decision,
+    get_policy_overview,
+    list_decisions,
 )
 
 __all__ = [
@@ -14,4 +18,8 @@ __all__ = [
     "ChatResponse",
     "HealthResponse",
     "AgentStatusResponse",
+    "get_summary",
+    "get_decision",
+    "get_policy_overview",
+    "list_decisions",
 ]

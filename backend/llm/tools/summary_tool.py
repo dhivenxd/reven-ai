@@ -50,6 +50,7 @@ def get_recovery_summary(
         result = RecoverySummaryResult(
             total_decisions=summary_data["total_decisions"],
             executed_decisions=summary_data["executed_decisions"],
+            captured_decisions=summary_data["captured_decisions"],
             pending_decisions=summary_data["pending_decisions"],
             failed_executions=summary_data["failed_executions"],
             revenue_preserved=summary_data["revenue_preserved"],

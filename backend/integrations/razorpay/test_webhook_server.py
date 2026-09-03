@@ -195,8 +195,53 @@ def test_payment_failed_flow():
 
 
 def test_payment_captured_flow():
-    """Test payment.captured webhook flow."""
-    payload = {
+    """Test payment.captured webhook flow with a matched decision."""
+    # First, create a decision via payment.failed webhook
+    failed_payload = {
+        "event": "payment.failed",
+        "created_at": int(datetime.now().timestamp()),
+        "payload": {
+            "payment": {
+                "entity": {
+                    "id": "pay_failed_for_capture",
+                    "amount": 39900,
+                    "currency": "INR",
+                    "status": "failed",
+                    "customer_id": "cust_capture_test",
+                    "subscription_id": "sub_capture_test",
+                    "email": "capture@example.com",
+                    "error_reason": "insufficient_funds",
+                }
+            },
+            "subscription": {
+                "entity": {
+                    "id": "sub_capture_test",
+                    "customer_id": "cust_capture_test",
+                    "plan_id": "plan_standard",
+                    "status": "active",
+                    "current_start": int(datetime.now().timestamp()) - (20 * 86400),
+                    "current_end": int(datetime.now().timestamp()) + (10 * 86400),
+                }
+            },
+        },
+    }
+
+    with patch("backend.integrations.razorpay.config.RAZORPAY_WEBHOOK_SECRET", "test_secret"):
+        with patch("backend.integrations.razorpay.config.is_configured", return_value=False):
+            sig = sign_payload(failed_payload, "test_secret")
+            resp = client.post(
+                "/webhooks/razorpay",
+                content=json.dumps(failed_payload),
+                headers={
+                    "X-Razorpay-Signature": sig,
+                    "X-Razorpay-Event-Id": "evt_capture_first",
+                    "Content-Type": "application/json",
+                },
+            )
+    assert resp.status_code == 200
+
+    # Now send payment.captured for the same customer
+    captured_payload = {
         "event": "payment.captured",
         "created_at": int(datetime.now().timestamp()),
         "payload": {
@@ -206,20 +251,20 @@ def test_payment_captured_flow():
                     "amount": 39900,
                     "currency": "INR",
                     "status": "captured",
-                    "customer_id": "cust_test_002",
-                    "subscription_id": "sub_test_002",
+                    "customer_id": "cust_capture_test",
+                    "subscription_id": "sub_capture_test",
                 }
             }
         },
     }
 
     with patch("backend.integrations.razorpay.config.RAZORPAY_WEBHOOK_SECRET", "test_secret"):
-        signature = sign_payload(payload, "test_secret")
+        sig = sign_payload(captured_payload, "test_secret")
         response = client.post(
             "/webhooks/razorpay",
-            content=json.dumps(payload),
+            content=json.dumps(captured_payload),
             headers={
-                "X-Razorpay-Signature": signature,
+                "X-Razorpay-Signature": sig,
                 "X-Razorpay-Event-Id": "evt_test_002",
                 "Content-Type": "application/json",
             },
@@ -229,10 +274,12 @@ def test_payment_captured_flow():
     data = response.json()
     assert data["status"] == "processed"
     assert data["event_type"] == "payment.captured"
-    assert data["customer_id"] == "cust_test_002"
+    assert data["customer_id"] == "cust_capture_test"
     assert data["amount"] == 399.0
-    assert "Revenue recovered" in data["message"]
-    print("[OK] payment.captured flow")
+    assert data["recovered"] is True
+    assert data["decision_id"] is not None
+    assert "recovered" in data["message"].lower()
+    print("[OK] payment.captured flow with decision recovery")
 
 
 def test_duplicate_event_idempotency():
