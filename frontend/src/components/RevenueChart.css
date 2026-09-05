@@ -1,0 +1,118 @@
+.chart-container {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-subtle);
+  padding: var(--space-6);
+}
+
+.chart-loading {
+  min-height: 380px;
+}
+
+.chart-skeleton {
+  width: 100%;
+  height: 280px;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 25%,
+    var(--color-border-subtle) 50%,
+    var(--color-bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+.chart-header {
+  margin-bottom: var(--space-6);
+}
+
+.chart-title {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.chart-description {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.chart-body {
+  margin: 0 calc(var(--space-4) * -1);
+}
+
+.chart-footer {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-10);
+  margin-top: var(--space-6);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.chart-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.stat-value {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chart-stat--highlight .stat-value {
+  color: var(--color-accent);
+}
+
+/* Tooltip */
+.chart-tooltip {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-lg);
+}
+
+.tooltip-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
+}
+
+.tooltip-value {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.tooltip-currency {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.tooltip-incremental {
+  font-size: var(--text-xs);
+  color: var(--color-success);
+  margin-top: var(--space-1);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

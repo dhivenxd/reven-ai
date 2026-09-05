@@ -1,0 +1,148 @@
+.chart-loading {
+  min-height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-skeleton-circle {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-secondary) 25%,
+    var(--color-border-subtle) 50%,
+    var(--color-bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.chart-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  align-items: center;
+}
+
+.pie-container {
+  position: relative;
+}
+
+.pie-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+}
+
+.pie-center-value {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.pie-center-label {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 8px 1fr auto auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.legend-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.legend-item--no-action {
+  background: var(--color-no-action-subtle);
+}
+
+.legend-item--no-action:hover {
+  background: rgba(88, 86, 214, 0.12);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.legend-label {
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.legend-value {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.legend-percentage {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Tooltip */
+.chart-tooltip {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  box-shadow: var(--shadow-lg);
+}
+
+.tooltip-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
+}
+
+.tooltip-value {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.tooltip-percentage {
+  font-size: var(--text-xs);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-1);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 768px) {
+  .chart-body {
+    grid-template-columns: 1fr;
+  }
+}

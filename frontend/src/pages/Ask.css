@@ -1,0 +1,27 @@
+.ask-page{display:flex;flex-direction:column;gap:26px}.ask-workspace{background:#fff;border:1px solid var(--line);min-height:620px;display:flex;flex-direction:column}.ask-history{flex:1;padding:42px 50px;overflow:auto}.ask-empty{max-width:760px;margin:45px auto 0}.ask-mark{width:38px;height:38px;background:var(--ink);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:600;margin-bottom:22px}.ask-empty h2{font-size:25px;letter-spacing:-.05em;margin-bottom:25px}.ask-starters{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}.ask-starters button{padding:17px 4px;text-align:left;border-bottom:1px solid var(--line);font-size:11px;color:#55554e;display:flex;justify-content:space-between;gap:20px}.ask-starters button:nth-child(odd){padding-right:25px;border-right:1px solid var(--line)}.ask-starters button:hover{color:var(--ink)}.ask-starters span{color:#aaa}.chat-line{max-width:760px;margin:0 auto 30px}.chat-label{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--quiet);font-weight:700}.chat-line p{font-size:14px;line-height:1.75;color:#45453f;margin-top:7px;white-space:pre-wrap}
+
+.thinking-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+.thinking-state .dot {
+  width: 4px;
+  height: 4px;
+  background: var(--muted);
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
+.thinking-state .dot:nth-child(2) { animation-delay: 0.2s; }
+.thinking-state .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40% { opacity: 1; }
+}
+
+.chat-line.user{border-left:2px solid var(--ink);padding-left:15px}.ask-input{border-top:1px solid var(--line);padding:15px 18px;display:flex;align-items:flex-end;gap:12px;background:var(--cream)}.ask-input textarea{flex:1;resize:none;border:0;background:transparent;outline:0;font-size:12px;line-height:1.5;color:var(--ink);padding:8px 4px;max-height:130px}.ask-input textarea::placeholder{color:#999890}.ask-input button{width:40px;height:40px;background:var(--ink);color:#fff;border-radius:6px;font-size:18px}.ask-input button:disabled{background:#c9c9c2}
+@media(max-width:600px){.ask-workspace{min-height:560px}.ask-history{padding:28px 20px}.ask-empty{margin-top:20px}.ask-starters{grid-template-columns:1fr}.ask-starters button:nth-child(odd){padding-right:4px;border-right:0}.ask-input{padding:11px}.ask-input button{width:44px;height:44px}}

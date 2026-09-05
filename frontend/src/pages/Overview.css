@@ -1,0 +1,344 @@
+.overview {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.overview-heading {
+  max-width: 1200px;
+  width: 100%;
+}
+
+.page-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+}
+
+.page-description {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 0;
+  max-width: 600px;
+}
+
+/* Simulator Panel - Integrated & Professional */
+.simulator-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.sim-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.sim-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.sim-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sim-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.sim-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: #fafafa;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.sim-group:hover {
+  border-color: var(--ink);
+}
+
+.sim-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.sim-btn {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.sim-btn:active {
+  transform: scale(0.98);
+}
+
+.sim-btn:disabled {
+  background: var(--muted);
+  cursor: not-allowed;
+}
+
+.sim-btn.ghost {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+
+.sim-hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* Hero Metrics - Clean & Impactful */
+.overview-hero {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.hero-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.hero-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hero-card-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.hero-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+}
+
+.hero-card-meta {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.meta-positive { color: var(--green); }
+.meta-negative { color: var(--red); }
+
+/* Analytics Section */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+.analytics-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--ink);
+}
+
+.chart-container {
+  height: 300px;
+  width: 100%;
+}
+
+/* Decision Mix */
+.mix-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mix-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mix-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.mix-label { color: var(--muted); font-weight: 500; }
+.mix-value { color: var(--ink); font-weight: 600; }
+
+.mix-bar-bg {
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mix-bar-fill {
+  height: 100%;
+  background: var(--ink);
+  transition: width 0.4s ease-out;
+}
+
+/* Recent Decisions Table */
+.recent-table-wrap {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr;
+  padding: 12px 24px;
+  background: #fafafa;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 2fr 1fr 1fr;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--line);
+  align-items: center;
+  font-size: 13px;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+
+.table-row:hover {
+  background: #fcfcfc;
+}
+
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.customer-avatar {
+  width: 32px;
+  height: 32px;
+  background: #ececec;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-pill {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  width: fit-content;
+}
+
+.status-executed { background: #eef2ff; color: #4f46e5; }
+.status-captured { background: #ecfdf5; color: #059669; }
+.status-failed { background: #fef2f2; color: #dc2626; }
+.status-blocked { background: #f5f5f5; color: #6b7280; }
+
+.review-banner {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.review-text {
+  font-size: 15px;
+  line-height: 1.6;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.review-badge {
+  background: rgba(255,255,255,0.1);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 1024px) {
+  .overview-hero { grid-template-columns: repeat(2, 1fr); }
+  .analytics-grid { grid-template-columns: 1fr; }
+  .sim-actions { grid-template-columns: 1fr; }
+}
