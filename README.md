@@ -41,7 +41,7 @@ REVEN operates as a deterministic state machine powered by grounded AI intellige
 - **Deterministic Policy**: Ensures consistent, audit-able decisions based on hard economic constraints.
 - **Intelligent Omission (`NO_ACTION`)**: Deliberately chooses not to intervene when the cost exceeds the expected gain.
 - **Razorpay Execution**: Automated creation of payment links via a frozen execution gateway.
-- **Truthful Tracking**: Tracks the full lifecycle from `FAILED` $\rightarrow$ `ANALYZED` $\rightarrow$ `EXECUTED` $\rightarrow$ `CAPTURED`.
+- **Truthful Tracking**: Tracks the full lifecycle from `FAILED` → `ANALYZED` → `EXECUTED` → `CAPTURED`.
 - **Grounded Operational Intelligence**: A Gemini-powered interface that explains decisions based on the actual `DecisionStore`.
 
 ---
@@ -69,7 +69,7 @@ graph TD
 
 Every action in REVEN is backed by a transparent reasoning path. We call this the **Decision Story**:
 
-**Situation $\rightarrow$ Risk $\rightarrow$ Economics $\rightarrow$ Policy $\rightarrow$ Decision $\rightarrow$ Execution $\rightarrow$ Outcome**
+**Situation → Risk → Economics → Policy → Decision → Execution → Outcome**
 
 A key differentiator of REVEN is the **Intelligent Omission**. When the system decides `NO_ACTION`, it is not a failure to act, but a calculated economic decision: *"The cost of this intervention exceeds the expected recovery value."*
 
@@ -100,10 +100,10 @@ REVEN is built for professional payment orchestration:
 
 To allow for deterministic evaluation without depending on live payment timing, REVEN includes a **Simulation Layer**:
 
-1. **Simulate Payment Failure**: Triggers the internal `payment.failed` handler $\rightarrow$ REVEN evaluates $\rightarrow$ Decision created.
+1. **Simulate Payment Failure**: Triggers the internal `payment.failed` handler → REVEN evaluates → Decision created.
 2. **Inspect Decision**: View the Decision Story and approved intervention.
 3. **Execution**: If approved, a simulated Payment Link is generated.
-4. **Simulate Payment Capture**: Triggers `payment.captured` for that specific decision $\rightarrow$ Status becomes `CAPTURED` $\rightarrow$ Recovered revenue updates.
+4. **Simulate Payment Capture**: Triggers `payment.captured` for that specific decision → Status becomes `CAPTURED` → Recovered revenue updates.
 
 *Note: Simulation endpoints are for demonstration purposes and bypass production webhook signature verification.*
 
@@ -191,7 +191,7 @@ npm run dev
 1. **Overview**: Open the Command Center and observe the base recovery metrics.
 2. **Trigger Failure**: Use the **Recovery Simulator** to "Simulate Payment Failure".
 3. **Analyze**: Observe the new decision appearing in "Recent Decisions".
-4. **Story**: Click the decision to view the **Decision Story** (Situation $\rightarrow$ Outcome).
+4. **Story**: Click the decision to view the **Decision Story** (Situation → Outcome).
 5. **Recover**: Use the simulator to "Simulate Payment Capture".
 6. **Verify**: Watch the "Recovered Revenue" metric update in real-time via polling.
 7. **Ask**: Use **Ask REVEN** to query the specific outcome: *"Why was this customer recovered?"*
